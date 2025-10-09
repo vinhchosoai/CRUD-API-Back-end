@@ -1,0 +1,14 @@
+# Dependencies
+/node_modules
+
+# Compiled TypeScript files
+/dist
+
+# Environment variables
+.env
+
+# Editor directories and files
+.vscode/
+
+# Local database data
+/MySQL
