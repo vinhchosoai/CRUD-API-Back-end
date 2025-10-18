@@ -1,71 +1,56 @@
-import { PrismaClient, User } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { prisma } from "../config/prisma";
+import { AppError } from "../utils/customErrors";
+import { CreateUserDto, userResponseDto, UpdateUserDto} from './user.dto';
+import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const selectSafe = {id : true, name : true, email : true, updatedAt : true, createdAt : true} as const;
 
-type UserInput = Omit<User,'id' | 'createdAt' | 'updatedAt'>;
-
-export const createUser = async(userData : UserInput) =>{
-    const hashedPassword = await bcrypt.hash(userData.password , 10);
-    
-    const user = await prisma.user.create({
-        data:{
-            name: userData.name,
-            email: userData.email,
-            password: hashedPassword,
-        },
-    });
-
-    const{password, ...userWithoutPassword} = user;
-    return userWithoutPassword;
-};
-
-export const findUserById = async(id: string)=>{
-    const user = await prisma.user.findUnique({
-        where : {id},
-    });
-
-    if(!user){
-        return null;
-    }
-
-    const { password, ...userWithoutPassWord} = user;
-    return userWithoutPassWord;
-}
-
-type UserUpdateInput = Partial<UserInput>;
-
-export const updateUser = async(id: string, userData: UserUpdateInput)=>{
+export async function createUser(data:CreateUserDto): Promise<userResponseDto> {
+    const hash =  await bcrypt.hash(data.password,10);
     try{
-        const user = await prisma.user.update({
-            where: { id },
-            data: userData,
-        });
-        
-        const { password, ...userWithoutPassword} = userData;
-        return userWithoutPassword;
-    }
-    catch ( error ){
-        return null;
-    }
-
-};
-
-export const deleteUser = async(id: string)=>{
-    try {
-        const user = await prisma.user.delete({
-            where:{ id },
+        const user = await prisma.user.create({
+            data:{name : data.name, email: data.email, password: hash},
+            select: selectSafe,
         });
         return user;
+    }catch(e: any){
+        if(e?.code ==='P2002') throw new AppError('ConflictError','Email already exists',409);
+        throw e;
     }
-    catch ( error ){
-        console.error("DELETE ERROR");
-        return null;
-    }
-};
+}
 
-export const getUsers = async()=>{
-    return await prisma.user.findMany({
-        select: { id: true, name:true , email:true, createdAt: true,updatedAt: true },
-    });
-};
+export async function getUser(id:string): Promise<userResponseDto |null> {
+    return prisma.user.findUnique({where:{ id }, select: selectSafe});
+}
+
+export async function updateUser(id: string, data: UpdateUserDto): Promise<userResponseDto | null> {
+    try{
+        const dataToUpdate : Partial<UpdateUserDto & { password ?: string} > = {...data};
+        if(data.password){
+            dataToUpdate.password = await bcrypt.hash(data.password, 10);
+        }else {
+            delete(dataToUpdate as any).password;
+        }
+        const user = await prisma.user.update({
+            where : { id },
+            data: dataToUpdate,
+            select : selectSafe,
+        });
+
+        return user;
+    }catch(e : any){
+        if(e?.code ==='P2025') return null;
+        if(e?.code ==='P2002') throw new AppError('ConflictError', 'Email already exists',409);
+        throw e;
+    }
+}
+
+export async function deleteUser(id:string): Promise<boolean> {
+    try{
+        await prisma.user.delete({ where: { id } });
+        return true;
+    }catch(e: any){
+        if(e?.code === 'P2025') return false;
+        throw e;
+    }
+}

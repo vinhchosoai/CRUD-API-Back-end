@@ -1,13 +1,10 @@
-export class NotFoundError extends Error{
-    constructor(message: string){
+export class AppError extends Error{
+    status : number;
+    type : string;
+    constructor(type : string ,message : string , status : number = 500){
         super(message);
-        this.name = 'NotFoundError';
-    }
-}
-
-export class ValidationError extends Error{
-    constructor(message: string){
-        super(message);
-        this.name = 'ValidationError';
+        this.type = type;
+        this.status = status;
+        Error.captureStackTrace?.(this, this.constructor);
     }
 }

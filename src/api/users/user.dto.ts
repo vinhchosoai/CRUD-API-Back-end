@@ -1,20 +1,34 @@
 import { z } from 'zod';
-import { email, string } from 'zod/v4';
 
-export const createUserSchema = z.object({
-    body: z.object({
-        name: z.string({
-            required_error: 'Name is required',
-        }),
-        email : z
-            .string({
-                required_error: 'Email is required',
-            })
-            .email('Not a valid email'),
-        password: z
-            .string({
-                required_error: 'Password is required',
-            })
-            .min(6, 'Password must be least 6 characters long'),
-    }),
+const PasswordSchema = z
+    .string()
+    .min(6,'Password must be at least 6 characters')
+    .regex(/\d/, 'Password must contain a number')
+    .regex(/[^\w\s]/, 'Password must contain special character');
+
+export const CreateUserSchema = z.object({
+    name : z.string().min(1,'Name is required'),
+    email : z.string().email('Email is not valid'),
+    password: PasswordSchema,
 });
+
+export type CreateUserDto = z.infer<typeof CreateUserSchema>;
+
+export const UpdateUserSchema = z.object({
+    email : z.string().email().optional(),
+    name : z.string().min(1).optional(),
+    password : PasswordSchema.optional(),
+}).strict();
+
+export interface UpdateUserDto{
+    name?: string;
+    email?: string;
+    password?: string;
+}
+export type userResponseDto ={
+    id : string;
+    email : string;
+    name : string;
+    createdAt : Date;
+    updatedAt : Date;
+}

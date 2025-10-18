@@ -1,6 +1,6 @@
 import { Request,Response, NextFunction } from "express";
 import * as userService from './user.service';
-import { error } from "console";
+import { AppError } from "../utils/customErrors";
 
 export const createUser = async(req : Request, res : Response, next : NextFunction) =>{
     try{
@@ -12,18 +12,14 @@ export const createUser = async(req : Request, res : Response, next : NextFuncti
     }
 };
 
-export const getUserById = async(req : Request, res: Response, next: NextFunction)=>{
+export const getUser = async(req : Request, res: Response, next: NextFunction)=>{
     try{
-        const {id} = req.params;
-        const user =  await userService.findUserById(id);
+        const user =  await userService.getUser(req.params.id);
 
-        if(!user){
-            return res.status(404).json({
-                error:'NotFoundError',
-                message: 'User not found',
-            });
-        }
-        res.status(200).json(user);
+        if(!user)
+            throw new AppError('NotFoundError','User not found',404);
+        
+        return res.status(200).json(user);
     }
     catch(error){
         next(error);
@@ -32,18 +28,9 @@ export const getUserById = async(req : Request, res: Response, next: NextFunctio
 
 export const updateUser = async(req: Request, res: Response, next:NextFunction)=>{
     try{
-        const { id } = req.params;
-        const userData = req.body;
-
-        const updatedUser = await userService.updateUser(id, userData);
-
-        if(!updateUser){
-            return res.status(404).json({
-                error: 'NotFoundError',
-                message: 'User not found',
-            });
-        }
-        res.status(200).json(updatedUser)
+        const user = await userService.updateUser(req.params.id, req.body);
+        if(!user) throw new AppError('NotFoundError','User not found', 404);
+        return res.status(200).json(user);
     }
     catch(error){
         next(error)
@@ -52,29 +39,12 @@ export const updateUser = async(req: Request, res: Response, next:NextFunction)=
 
 export const deleteUser = async (req: Request, res: Response, next:NextFunction)=>{
     try{
-        const { id } = req.params;
-        const deleteUser = await userService.deleteUser(id);
-
-        if(!deleteUser){
-            return res.status(404).json({
-                error:'NotFoundError',
-                message:'User not found',
-            });
-        }
-
-        res.status(204).send();
+        const ok = await userService.deleteUser(req.params.id);
+        if(!ok) throw new AppError('NotFoundError','User not found', 404);
+        return res.status(204).send();
     }
     catch (error){
         next(error);
     }
 };
 
-export const getUsers = async(req: Request, res: Response, next:NextFunction)=>{
-    try{
-        const users = await userService.getUsers();
-        res.status(200).json(users);
-    }
-    catch(error){
-        next(error);
-    }
-}
