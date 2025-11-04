@@ -20,12 +20,8 @@ export const UpdateUserSchema = z.object({
     password : PasswordSchema.optional(),
 }).strict();
 
-export interface UpdateUserDto{
-    name?: string;
-    email?: string;
-    password?: string;
-}
-export type userResponseDto ={
+export type UpdateUserDto = z.infer<typeof UpdateUserSchema>;
+export type userResponseDto = {
     id : string;
     email : string;
     name : string;

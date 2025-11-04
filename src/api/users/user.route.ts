@@ -1,13 +1,16 @@
 import { Router } from "express";
 import * as userController from './user.controller';
 import { validateRequest } from "../middlewares/validateRequest";
-import { CreateUserSchema, UpdateUserSchema } from "./user.dto";
+import { UpdateUserSchema } from "./user.dto";
+import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
 
-router.post('/', validateRequest(CreateUserSchema), userController.createUser);
-router.put('/:id',validateRequest(UpdateUserSchema), userController.updateUser);
+router.use(protect);
+
+router.put('/:id', validateRequest(UpdateUserSchema), userController.updateUser);
 router.get('/:id', userController.getUser);
 router.delete('/:id', userController.deleteUser);
+router.patch('/:id', userController.upgradeRankUser);
 
 export default router;

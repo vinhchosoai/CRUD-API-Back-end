@@ -7,11 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Rank {
+  BRONZE
+  SILVER
+  GOLD
+}
+
+
 model User{
     id          String      @id @default(uuid())
     name        String
     email       String      @unique
     password    String
+    rank        String      @default("BRONZE")
+    score       Int         @default(0)
     createdAt   DateTime    @default(now())
     updatedAt   DateTime   @updatedAt
 }

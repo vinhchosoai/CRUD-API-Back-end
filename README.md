@@ -39,6 +39,9 @@ Install dependencies:
 
 `npm install`
 
+# Update
+29/10/2025 Update login model and rank with score for users
+ 
 # Set up environment variables:
 Create a .env file in the root of the project by copying the example file:
 
